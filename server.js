@@ -78,12 +78,15 @@ router.route('/movies')
         if (!movie) return res.status(404).json({ success: false, message: 'Movie not found.' });
         return res.status(200).json(movie);
       }
-
+      else {
+        // Otherwise, return all movies sorted by title
       const movies = await Movie.find({}).sort({ title: 1 });
       return res.status(200).json(movies);
-    } catch (err) {
+    }} catch (err) {
       console.error(err);
       return res.status(500).json({ success: false, message: 'Failed to retrieve movies.' });
+
+    
     }
     })
     
