@@ -72,13 +72,13 @@ router.route('/movies')
    
     .get (authJwtController.isAuthenticated, async (req, res) => {
     try {      
-        const { title } = req.query;
-        if (!title) {
+        const { id } = req.query.movieId;
+        if (!id) {
             const movies = await Movie.find({}).sort({ title: 1 });
       return res.status(200).json(movies);
         }
         else {
-        const movie = await Movie.findOne({ title });
+        const movie = await Movie.findOne({ _id: id });
         if (!movie) {
             return res.status(404).json({ success: false, message: 'Movie not found.' });
         }   
