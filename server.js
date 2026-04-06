@@ -7,7 +7,6 @@ const cors = require('cors');
 const User = require('./Users');
 const Movie = require('./Movies'); // You're not using Movie, consider removing it
 const Review = require('./Reviews');
-const e = require('express');
 
 const app = express();
 app.use(cors());
@@ -70,22 +69,24 @@ router.post('/signin', async (req, res) => { // Use async/await
 });
 
 router.route('/movies')
-    .get(authJwtController.isAuthenticated, async (req, res) => {
-    try {
-      const movies = await Movie.find({}).sort({ title: 1 });
-      if ("reviews" in req.query && req.query.reviews === "true") {
-        const moviesWithReviews = await Promise.all(movies.map(async (movie) => {
-          const reviews = await Review.find({ movieId: movie._id }).select('username review rating createdAt');
-          return { ...movie.toObject(), reviews };
-        }));
-        return res.status(200).json(moviesWithReviews);
-      }
-      else {
-              return res.status(200).json(movies);}
-    } catch (err) {
+   
+    .get (authJwtController.isAuthenticated, async (req, res) => {
+    try {      
+        const { title } = req.query;
+        if (!title) {
+            const movies = await Movie.find({}).sort({ title: 1 });
+      return res.status(200).json(movies);
+        }
+        else {
+        const movie = await Movie.findOne({ title });
+        if (!movie) {
+            return res.status(404).json({ success: false, message: 'Movie not found.' });
+        }   
+        return res.status(200).json(movie);
+    }} catch (err) {
       console.error(err);
       return res.status(500).json({ success: false, message: 'Failed to retrieve movies.' });
-    }
+    }   
     })
     .post(authJwtController.isAuthenticated, async (req, res) => {
     try {
