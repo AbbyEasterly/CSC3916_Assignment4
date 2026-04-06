@@ -225,7 +225,27 @@ router.route('/Reviews')
     }
 
     })
-
+    .put(authJwtController.isAuthenticated, async (req, res) => {
+    try {      const { id, review: reviewText, rating } = req.body;
+      if (!id) {  
+        return res.status(400).json({ success: false, message: 'Review ID is required.' });
+      }
+      if (rating !== undefined && (rating < 0 || rating > 5)) {
+        return res.status(400).json({ success: false, message: 'Rating must be between 0 and 5.' });
+      } 
+      const updatedReview = await Review.findByIdAndUpdate(id, { review: reviewText, rating }, { new: true });
+      if (!updatedReview) {
+        return res.status(404).json({ success: false, message: 'Review not found.' });
+      } 
+      return res.status(200).json({ review: updatedReview, message: 'Review updated!' });
+    } catch (err) {
+      if (err.name === 'ValidationError') {
+        return res.status(400).json({ success: false, message: err.message });
+      } 
+      console.error(err);
+      return res.status(500).json({ success: false, message: 'Failed to update review.' });
+    }
+    })
 
     .delete(authJwtController.isAuthenticated, async (req, res) => {
     try {      const { id } = req.body; 
