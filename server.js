@@ -144,29 +144,19 @@ router.route('/movies')
 app.use('/', router);
 
 router.route('/Reviews')
+  
   .get(authJwtController.isAuthenticated, async (req, res) => {
     try {
-      // Accept movieId from query string or JSON body
       const filter = {};
       if (req.query.movieId) filter.movieId = req.query.movieId;
-      else if (req.body && req.body.movieId) filter.movieId = req.body.movieId;
-      if (req.query.username) filter.username = req.query.username;
-
-      const page = Math.max(1, parseInt(req.query.page || req.body && req.body.page || 1));
-      const limit = Math.max(1, parseInt(req.query.limit || req.body && req.body.limit || 10));
-
-      const reviews = await Review.find(filter)
-        .populate('movieId')
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit);
-
-      return res.status(200).json(reviews);
+      if (req.query.username) filter.username = req.query.username; 
+        const reviews = await Review.find(filter).populate('movieId').sort({ createdAt: -1 });
+        return res.status(200).json(reviews);
     } catch (err) {
       console.error(err);
       return res.status(500).json({ success: false, message: 'Failed to retrieve reviews.' });
-    }
-  })
+    }   
+    })
   .post(authJwtController.isAuthenticated, async (req, res) => {
     try {
       const review = new Review(req.body);
