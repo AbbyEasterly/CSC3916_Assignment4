@@ -1,4 +1,5 @@
 var passport = require('passport');
+require('dotenv').config();
 var JwtStrategy = require('passport-jwt').Strategy;
 var ExtractJwt = require('passport-jwt').ExtractJwt;
 var User = require('./Users');
@@ -7,14 +8,18 @@ var opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme("jwt");
 opts.secretOrKey = process.env.SECRET_KEY;
 
-passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
-    User.findById(jwt_payload.id, function (err, user) {
+passport.use(new JwtStrategy(opts, async (jwt_payload, done) => {
+    try {
+        const user = await User.findById(jwt_payload.id);
+        
         if (user) {
-            done(null, user);
+            return done(null, user);
         } else {
-            done(null, false);
+            return done(null, false);
         }
-    });
+    } catch (err) {
+        return done(err, false);
+    }
 }));
 
 exports.isAuthenticated = passport.authenticate('jwt', { session : false });

@@ -25,26 +25,14 @@ let movie_details = {
 let token = ''
 
 describe('Test Movie Routes', () => {
-   before((done) => { //Before  test initialize the database to empty
-        User.deleteOne({ name: 'test2'}, function(err, user) {
-            if (err) throw err;
-        });
-       
-        Movie.deleteOne({ title: 'Alice in Wonderland'}, function(err, user) {
-            if (err) throw err;
-        });
-       done();
+   before(async () => { //Before  test initialize the database to empty
+        await User.deleteOne({ name: 'test2'});
+        await Movie.deleteOne({ title: 'Alice in Wonderland'});
     })
 
-    after((done) => { //after this test suite empty the database
-        User.deleteOne({ name: 'test2'}, function(err, user) {
-            if (err) throw err;
-        });
-       
-        Movie.deleteOne({ title: 'Alice in Wonderland'}, function(err, user) {
-            if (err) throw err;
-        });
-        done();
+    after(async () => { //after this test suite empty the database
+        await User.deleteOne({ name: 'test2'});
+        await Movie.deleteOne({ title: 'Alice in Wonderland'});
     })
 
     describe('/signup', () => {
