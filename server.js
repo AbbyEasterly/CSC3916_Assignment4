@@ -71,6 +71,14 @@ router.post('/signin', async (req, res) => { // Use async/await
 router.route('/movies')
     .get(authJwtController.isAuthenticated, async (req, res) => {
     try {
+      // If a movieId is provided in the request body, return only that movie
+      const movieId = req.body && req.body.movieId;
+      if (movieId) {
+        const movie = await Movie.findById(movieId);
+        if (!movie) return res.status(404).json({ success: false, message: 'Movie not found.' });
+        return res.status(200).json(movie);
+      }
+
       const movies = await Movie.find({}).sort({ title: 1 });
       return res.status(200).json(movies);
     } catch (err) {
@@ -78,28 +86,8 @@ router.route('/movies')
       return res.status(500).json({ success: false, message: 'Failed to retrieve movies.' });
     }
     })
-    .get(authJwtController.isAuthenticated, async (req, res) => {
-    try {
-      const { title } = req.query;  
-      const { review } = req.query;
-
-        if (!title) {
-            return res.status(400).json({ success: false, message: 'Movie title is required.' });
-        }
-        const movie = await Movie.findOne({ title });
-        if (!movie) {
-            return res.status(404).json({ success: false, message: 'Movie not found.' });
-        }       
-        if (review) {
-            const reviews = await Review.find({ movieId: movie._id }).sort({ createdAt: -1 });
-            return res.status(200).json({ movie, reviews });
-        }   
-        return res.status(200).json(movie);
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ success: false, message: 'Failed to retrieve movie.' });
-    }
-    })
+    
+ 
     .post(authJwtController.isAuthenticated, async (req, res) => {
     try {
       const movie = new Movie(req.body);
