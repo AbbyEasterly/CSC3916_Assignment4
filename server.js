@@ -81,6 +81,8 @@ router.route('/movies')
     .get(authJwtController.isAuthenticated, async (req, res) => {
     try {
       const { title } = req.query;  
+      const { review } = req.query;
+
         if (!title) {
             return res.status(400).json({ success: false, message: 'Movie title is required.' });
         }
@@ -88,6 +90,10 @@ router.route('/movies')
         if (!movie) {
             return res.status(404).json({ success: false, message: 'Movie not found.' });
         }       
+        if (review) {
+            const reviews = await Review.find({ movieId: movie._id }).sort({ createdAt: -1 });
+            return res.status(200).json({ movie, reviews });
+        }   
         return res.status(200).json(movie);
     } catch (err) {
         console.error(err);
