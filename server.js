@@ -7,6 +7,7 @@ const cors = require('cors');
 const User = require('./Users');
 const Movie = require('./Movies'); // You're not using Movie, consider removing it
 const Review = require('./Reviews');
+const e = require('express');
 
 const app = express();
 app.use(cors());
@@ -72,7 +73,15 @@ router.route('/movies')
     .get(authJwtController.isAuthenticated, async (req, res) => {
     try {
       const movies = await Movie.find({}).sort({ title: 1 });
-      return res.status(200).json(movies);
+      if ("reviews" in req.query && req.query.reviews === "true") {
+        const moviesWithReviews = await Promise.all(movies.map(async (movie) => {
+          const reviews = await Review.find({ movieId: movie._id }).select('username review rating createdAt');
+          return { ...movie.toObject(), reviews };
+        }));
+        return res.status(200).json(moviesWithReviews);
+      }
+      else {
+              return res.status(200).json(movies);}
     } catch (err) {
       console.error(err);
       return res.status(500).json({ success: false, message: 'Failed to retrieve movies.' });
