@@ -76,6 +76,15 @@ router.route('/movies')
       if (movieId) {
         const movie = await Movie.findById(movieId);
         if (!movie) return res.status(404).json({ success: false, message: 'Movie not found.' });
+
+        const includeReviews = (req.query.review === 'true' || req.query.reviews === 'true' || (req.body && (req.body.review === true || req.body.reviews === true)));
+        if (includeReviews) {
+          const reviews = await Review.find({ movieId: movie._id }).sort({ createdAt: -1 });
+          const movieObj = movie.toObject();
+          movieObj.reviews = reviews;
+          return res.status(200).json(movieObj);
+        }
+
         return res.status(200).json(movie);
       }
       else {
@@ -155,6 +164,28 @@ router.route('/movies')
 
 
 app.use('/', router);
+
+// RESTful route to get a single movie by id (preferred over GET body)
+router.get('/movies/:id', authJwtController.isAuthenticated, async (req, res) => {
+  try {
+    const movieId = req.params.id;
+    const movie = await Movie.findById(movieId);
+    if (!movie) return res.status(404).json({ success: false, message: 'Movie not found.' });
+
+    const includeReviews = (req.query.review === 'true' || req.query.reviews === 'true');
+    if (includeReviews) {
+      const reviews = await Review.find({ movieId: movie._id }).sort({ createdAt: -1 });
+      const movieObj = movie.toObject();
+      movieObj.reviews = reviews;
+      return res.status(200).json(movieObj);
+    }
+
+    return res.status(200).json(movie);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve movie.' });
+  }
+});
 
 router.route('/Reviews')
   
