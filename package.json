@@ -4,6 +4,7 @@
   "description": "Web API 3916 Homework 3",
   "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "mocha --timeout 10000 --exit",
     "test:local": "cross-env DB=mongodb://127.0.0.1:27017/csc3916_test SECRET_KEY=dev_secret mocha --timeout 10000 --exit",
     "test:atlas": "cross-env DB=\"mongodb+srv://abigaileasterly_db_user:MichaelJordan1@cluster0.papczvo.mongodb.net/?appName=Cluster0\" SECRET_KEY=dev_secret mocha --timeout 10000 --exit"
