@@ -71,27 +71,60 @@ router.post('/signin', async (req, res) => { // Use async/await
 router.route('/movies')
     .get(authJwtController.isAuthenticated, async (req, res) => {
     try {
+      // Determine whether the caller requested reviews/ratings
+      const includeReviews = (req.query.review === 'true' || req.query.reviews === 'true' || (req.body && (req.body.review === true || req.body.reviews === true)));
+
       // If a movieId is provided in the request body, return only that movie
       const movieId = req.body && req.body.movieId;
       if (movieId) {
         const movie = await Movie.findById(movieId);
         if (!movie) return res.status(404).json({ success: false, message: 'Movie not found.' });
 
-        const includeReviews = (req.query.review === 'true' || req.query.reviews === 'true' || (req.body && (req.body.review === true || req.body.reviews === true)));
         if (includeReviews) {
           const reviews = await Review.find({ movieId: movie._id }).sort({ createdAt: -1 });
           const movieObj = movie.toObject();
           movieObj.reviews = reviews;
+          // compute avgRating for this single movie
+          movieObj.avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) : 0;
           return res.status(200).json(movieObj);
         }
 
         return res.status(200).json(movie);
+      } else {
+        // Otherwise, return all movies. If reviews requested, aggregate avgRating and sort desc
+        if (includeReviews) {
+          const aggregate = [
+            {
+              $lookup: {
+                from: 'reviews',
+                localField: '_id',
+                foreignField: 'movieId',
+                as: 'movieReviews'
+              }
+            },
+            {
+              $addFields: {
+                avgRating: { $avg: '$movieReviews.rating' }
+              }
+            },
+            {
+              $addFields: {
+                avgRating: { $ifNull: ['$avgRating', 0] }
+              }
+            },
+            {
+              $sort: { avgRating: -1 }
+            }
+          ];
+
+          const movies = await Movie.aggregate(aggregate).exec();
+          return res.status(200).json(movies);
+        }
+
+        const movies = await Movie.find({}).sort({ title: 1 });
+        return res.status(200).json(movies);
       }
-      else {
-        // Otherwise, return all movies sorted by title
-      const movies = await Movie.find({}).sort({ title: 1 });
-      return res.status(200).json(movies);
-    }} catch (err) {
+    } catch (err) {
       console.error(err);
       return res.status(500).json({ success: false, message: 'Failed to retrieve movies.' });
 
