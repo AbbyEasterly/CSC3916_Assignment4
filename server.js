@@ -56,11 +56,11 @@ router.post('/signin', async (req, res) => { // Use async/await
     const isMatch = await user.comparePassword(req.body.password); // Use await
 
     if (isMatch) {
-      const userToken = { id: user._id, username: user.username }; // Use user._id (standard Mongoose)
+      const userToken = { id: user._id, username: user.username, name: user.name }; // Use user._id (standard Mongoose)
       const token = jwt.sign(userToken, process.env.SECRET_KEY, { expiresIn: '1h' }); // Add expiry to the token (e.g., 1 hour)
       res.json({ success: true, token: 'JWT ' + token });
     } else {
-      res.status(401).json({ success: false, msg: 'Authentication failed. Incorrect password.' }); // 401 Unauthorized
+      res.status(401).json({ username: req.body.name, success: false, msg: 'Authentication failed. Incorrect password.' }); // 401 Unauthorized
     }
   } catch (err) {
     console.error(err); // Log the error
